@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Flappy Bird</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      background-color: #70c5ce;
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+  <script>
+    var canvas = document.getElementById("gameCanvas");
+    var ctx = canvas.getContext("2d");
+
+    var birdX = 50;
+    var birdY = canvas.height / 2;
+    var birdRadius = 20;
+    var gravity = 1;
+    var jumpStrength = 15;
+
+    var pipes = [];
+    var pipeWidth = 50;
+    var pipeGap = 150;
+    var pipeSpeed = 3;
+
+    var score = 0;
+
+    var gameInterval;
+
+    function startGame() {
+      pipes = [];
+      score = 0;
+      birdY = canvas.height / 2;
+      document.getElementById("gameCanvas").style.display = "block";
+      document.getElementById("gameOver").style.display = "none";
+      gameInterval = setInterval(updateGameArea, 20);
+    }
+
+    function stopGame() {
+      clearInterval(gameInterval);
+      document.getElementById("gameCanvas").style.display = "none";
+      document.getElementById("gameOver").style.display = "block";
+    }
+
+    function updateGameArea() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      birdY += gravity;
+      drawBird();
+
+      for (var i = 0; i < pipes.length; i++) {
+        pipes[i].x -= pipeSpeed;
+        drawPipe(pipes[i]);
+
+        if (collisionCheck(birdX, birdY, birdRadius, pipes[i])) {
+          stopGame();
+          return;
+        }
+
+        if (pipes[i].x + pipeWidth < 0) {
+          pipes.splice(i, 1);
+          i--;
+          score++;
+        }
+      }
+
+      if (birdY < birdRadius || birdY > canvas.height - birdRadius) {
+        stopGame();
+        return;
+      }
+
+      if (pipes.length < 2) {
+        createPipe();
+      }
+
+      drawScore();
+    }
+
+    function drawBird() {
+      ctx.beginPath();
+      ctx.arc(birdX, birdY, birdRadius, 0, Math.PI * 2);
+      ctx.fillStyle = "red";
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function drawPipe(pipe) {
+      ctx.fillStyle = "green";
+      ctx.fillRect(pipe.x, 0, pipeWidth, pipe.y);
+      ctx.fillRect(pipe.x, pipe.y + pipeGap, pipeWidth, canvas.height - pipe.y - pipeGap);
+    }
+
+    function createPipe() {
+      var minHeight = 50;
+      var maxHeight = canvas.height - 200;
+      var randomHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+      pipes.push({ x: canvas.width, y: randomHeight });
+    }
+
+    function collisionCheck(birdX, birdY, birdRadius, pipe) {
+      return (
+        birdX + birdRadius > pipe.x &&
+        birdX - birdRadius < pipe.x + pipeWidth &&
+        (birdY - birdRadius < pipe.y || birdY + birdRadius > pipe.y + pipeGap)
+      );
+    }
+
+    function drawScore() {
+      ctx.fillStyle = "black";
+      ctx.font = "30px Arial";
+      ctx.fillText("Score: " + score, 10, 30);
+    }
+
+    document.addEventListener("keydown", function (event) {
+      if (event.keyCode === 32) { // Space key
+        birdY -= jumpStrength;
+      }
+    });
+  </script>
+
+  <div id="gameOver" style="text-align: center; display: none;">
+    <h1>Game Over</h1>
+    <button onclick="startGame()">Restart</button>
+  </div>
+</body>
+</html>

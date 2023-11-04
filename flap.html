@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Flappy Bird</title>
+  <style>
+    canvas {
+      border: 2px solid black;
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+  <script>
+    var canvas = document.getElementById("gameCanvas");
+    var ctx = canvas.getContext("2d");
+
+    var birdY = canvas.height / 2;
+    var birdVelocity = 0;
+    var gravity = 0.5;
+    var jumpStrength = -10;
+
+    var obstacleWidth = 30;
+    var obstacleGap = 100;
+    var obstacles = [];
+    var obstacleSpeed = 2;
+
+    var score = 0;
+    
+    var gameInterval;
+
+    function startGame() {
+      obstacles = [];
+      score = 0;
+      birdY = canvas.height / 2;
+      birdVelocity = 0;
+      document.getElementById("gameCanvas").style.display = "block";
+      document.getElementById("gameOver").style.display = "none";
+      gameInterval = setInterval(updateGameArea, 20);
+    }
+
+    function stopGame() {
+      clearInterval(gameInterval);
+      document.getElementById("gameCanvas").style.display = "none";
+      document.getElementById("gameOver").style.display = "block";
+    }
+
+    function updateGameArea() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      birdVelocity += gravity;
+      birdY += birdVelocity;
+      
+      if (birdY < 0) {
+        birdY = 0;
+        birdVelocity = 0;
+      }
+
+      if (birdY > canvas.height) {
+        stopGame();
+        return;
+      }
+
+      drawBird();
+
+      for (var i = 0; i < obstacles.length; i++) {
+        obstacles[i].x -= obstacleSpeed;
+        drawObstacle(obstacles[i]);
+
+        if (birdX + 30 > obstacles[i].x && birdX < obstacles[i].x + obstacleWidth) {
+          if (birdY < obstacles[i].y || birdY + 20 > obstacles[i].y + obstacleGap) {
+            stopGame();
+            return;
+          }
+        }
+
+        if (obstacles[i].x + obstacleWidth < 0) {
+          obstacles.splice(i, 1);
+          i--;
+          score++;
+        }
+      }
+
+      if (obstacles.length < 2) {
+        createObstacle();
+      }
+
+      drawScore();
+    }
+
+    function drawBird() {
+      ctx.fillStyle = "blue";
+      ctx.fillRect(50, birdY, 30, 20);
+    }
+
+    function drawObstacle(obstacle) {
+      ctx.fillStyle = "green";
+      ctx.fillRect(obstacle.x, 0, obstacleWidth, obstacle.y);
+      ctx.fillRect(obstacle.x, obstacle.y + obstacleGap, obstacleWidth, canvas.height - obstacle.y - obstacleGap);
+    }
+
+    function createObstacle() {
+      var randomHeight = Math.floor(Math.random() * (canvas.height - obstacleGap));
+      obstacles.push({ x: canvas.width, y: randomHeight });
+    }
+
+    function drawScore() {
+      ctx.fillStyle = "black";
+      ctx.font = "30px Arial";
+      ctx.fillText("Score: " + score, 10, 30);
+    }
+
+    document.addEventListener("keydown", function (event) {
+      if (event.keyCode === 32) { // Space key
+        birdVelocity = jumpStrength;
+      }
+    });
+  </script>
+
+  <div id="gameOver" style="text-align: center; display: none;">
+    <h1>Game Over</h1>
+    <button onclick="startGame()">Restart</button>
+  </div>
+</body>
+</html>
